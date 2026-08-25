@@ -11,9 +11,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Unzip project
+      - name: Find and unzip project
         run: |
-          ZIP_FILE=$(find . -maxdepth 1 -type f \( -iname "*.zip" -o -iname "*.rar" \) | head -n 1)
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name "*.zip" | head -n 1)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "No ZIP file found"
+            exit 1
+          fi
+
+          echo "Found ZIP: $ZIP_FILE"
+
           mkdir -p project
           unzip -o "$ZIP_FILE" -d project
 
@@ -23,19 +31,31 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Build APK
+      - name: Find Gradle wrapper
         run: |
-          GRADLEW=$(find project -type f -name gradlew | head -n 1)
+          GRADLEW=$(find project -type f -name "gradlew" | head -n 1)
+
           if [ -z "$GRADLEW" ]; then
             echo "gradlew not found"
+            echo "Files inside project:"
+            find project -maxdepth 4 -type f | head -n 100
             exit 1
           fi
+
+          echo "Found Gradle wrapper: $GRADLEW"
           chmod +x "$GRADLEW"
-          cd "$(dirname "$GRADLEW")"
-          ./gradlew assembleDebug
+
+          PROJECT_DIR=$(dirname "$GRADLEW")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
+      - name: Build APK
+        run: |
+          cd "$PROJECT_DIR"
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: "project/**/build/outputs/apk/debug/*.apk"
+          if-no-files-found: error
