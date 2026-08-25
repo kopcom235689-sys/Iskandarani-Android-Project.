@@ -24,10 +24,9 @@ jobs:
 
           mkdir -p project
           unzip -o "$ZIP_FILE" -d project
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
+           - name: Setup Java
+          uses: actions/setup-java@v4
+                     with:
           distribution: temurin
           java-version: '17'
 
