@@ -23,8 +23,9 @@ jobs:
           java-version: '17'
 
       - name: Build APK
-        run: |
-          GRADLEW=$(find project -name gradlew -type f | head -1)
+        run: |         
+       GRADLEW=$(find project -name gradlew -type f | head -1)
+          chmod +x "$GRADLEW"
           cd "$(dirname "$GRADLEW")"
           ./gradlew assembleDebug
 
