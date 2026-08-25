@@ -13,8 +13,9 @@ jobs:
 
       - name: Unzip project
         run: |
-          unzip -o "Iskandarani_Android_Project.zip1.zip" -d project
-          find project -name gradlew -type f -exec chmod +x {} \;
+          ZIP_FILE=$(find . -maxdepth 1 -type f \( -iname "*.zip" -o -iname "*.rar" \) | head -n 1)
+          mkdir -p project
+          unzip -o "$ZIP_FILE" -d project
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -23,8 +24,12 @@ jobs:
           java-version: '17'
 
       - name: Build APK
-        run: |         
-       GRADLEW=$(find project -name gradlew -type f | head -1)
+        run: |
+          GRADLEW=$(find project -type f -name gradlew | head -n 1)
+          if [ -z "$GRADLEW" ]; then
+            echo "gradlew not found"
+            exit 1
+          fi
           chmod +x "$GRADLEW"
           cd "$(dirname "$GRADLEW")"
           ./gradlew assembleDebug
@@ -33,4 +38,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: project/**/build/outputs/apk/**/*.apk
+          path: "project/**/build/outputs/apk/debug/*.apk"
